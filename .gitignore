@@ -1,0 +1,13 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.terraform.lock.hcl
+
+# Sensitive values — do NOT commit credentials
+# terraform.tfvars   # Uncomment if you put secrets in tfvars
+
+# OS
+.DS_Store
+Thumbs.db

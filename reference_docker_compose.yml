@@ -1,0 +1,83 @@
+# =============================================================================
+# Docker Compose — AI Stack (runs on gpu-ai VM at 10.0.0.47)
+# =============================================================================
+# This file is NOT managed by Terraform. It's included as a reference
+# for post-provisioning setup. Deploy with:
+#   scp docker-compose.yml user@10.0.0.47:~/ai-stack/
+#   ssh user@10.0.0.47 "cd ~/ai-stack && docker compose up -d"
+#
+# Or automate with Ansible (recommended).
+# =============================================================================
+
+services:
+  # --- LLM Inference Engine ---
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # --- Speech-to-Text ---
+  whisper:
+    image: rhasspy/wyoming-whisper:latest
+    container_name: whisper
+    ports:
+      - "10300:10300"
+    command: --model small --language en
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # --- Text-to-Speech ---
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    container_name: piper
+    ports:
+      - "10200:10200"
+    command: --voice en_US-lessac-medium
+    volumes:
+      - piper-data:/data
+    restart: unless-stopped
+
+  # --- Wake Word Detection ---
+  openwakeword:
+    image: rhasspy/wyoming-openwakeword:latest
+    container_name: openwakeword
+    ports:
+      - "10400:10400"
+    command: --preload-model ok_nabu
+    restart: unless-stopped
+
+  # --- Web UI for Ollama ---
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
+  piper-data:
+  open-webui-data:
