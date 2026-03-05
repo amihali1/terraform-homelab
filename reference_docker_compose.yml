@@ -12,7 +12,7 @@
 services:
   # --- LLM Inference Engine ---
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama
     container_name: ollama
     ports:
       - "11434:11434"
@@ -22,45 +22,42 @@ services:
       resources:
         reservations:
           devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+            - capabilities: [gpu]
     restart: unless-stopped
 
   # --- Speech-to-Text ---
   whisper:
-    image: rhasspy/wyoming-whisper:latest
+    image: rhasspy/wyoming-whisper
     container_name: whisper
     ports:
       - "10300:10300"
+    volumes:
+      - whisper-data:/data
     command: --model small --language en
     deploy:
       resources:
         reservations:
           devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+            - capabilities: [gpu]
     restart: unless-stopped
 
   # --- Text-to-Speech ---
   piper:
-    image: rhasspy/wyoming-piper:latest
+    image: rhasspy/wyoming-piper
     container_name: piper
     ports:
       - "10200:10200"
-    command: --voice en_US-lessac-medium
     volumes:
       - piper-data:/data
+    command: --voice en_US-lessac-medium
     restart: unless-stopped
 
   # --- Wake Word Detection ---
   openwakeword:
-    image: rhasspy/wyoming-openwakeword:latest
+    image: rhasspy/wyoming-openwakeword
     container_name: openwakeword
     ports:
       - "10400:10400"
-    command: --preload-model ok_nabu
     restart: unless-stopped
 
   # --- Web UI for Ollama ---
@@ -79,5 +76,6 @@ services:
 
 volumes:
   ollama-data:
+  whisper-data:
   piper-data:
   open-webui-data:
